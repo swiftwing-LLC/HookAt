@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HookAt</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="intro" aria-labelledby="brand-title">
+        <nav class="site-nav" aria-label="Site navigation">
+          <a class="brand-mark" href="#brand-title">HookAt</a>
+          <div class="nav-links">
+            <a href="#auth-form">Access</a>
+            <a href="#auth-form">Safety</a>
+            <a href="#auth-form">Rules</a>
+          </div>
+          <a class="nav-login" href="login.html">Log in</a>
+        </nav>
+        <div class="intro-copy">
+          <h1 id="brand-title">HookAt</h1>
+          <p class="lead">Adult-only access for clear intent, verified consent, and direct chemistry.</p>
+          <a class="hero-cta" href="#auth-view">Create account</a>
+        </div>
+      </section>
+
+      <section class="workspace" aria-label="Dating app">
+        <header class="topbar">
+          <div>
+          <p class="eyebrow">HookAt access</p>
+          <h2 id="screen-title">Create your account</h2>
+          </div>
+          <button class="ghost-button hidden" id="sign-out-button" type="button">Sign out</button>
+        </header>
+
+        <section id="auth-view" class="auth-view">
+          <form id="auth-form" class="auth-form" novalidate>
+            <div class="step-track" aria-label="Account steps">
+              <span class="step-dot active" data-step-dot="0"></span>
+              <span class="step-dot" data-step-dot="1"></span>
+              <span class="step-dot" data-step-dot="2"></span>
+              <span class="step-dot" data-step-dot="3"></span>
+              <span class="step-dot" data-step-dot="4"></span>
+            </div>
+
+            <fieldset class="onboarding-step" data-step="0">
+              <legend>Are you 18 or older?</legend>
+              <p class="step-copy">HookAt is for adults only. Consent and boundaries are required here.</p>
+              <label class="check-row">
+                <input id="adult-input" type="checkbox" required />
+                <span>I confirm I am 18+ and I agree to clear consent and respectful behavior.</span>
+              </label>
+              <button class="primary-button next-step" data-next-step="1" type="button">Next</button>
+            </fieldset>
+
+            <fieldset class="onboarding-step hidden" data-step="1">
+              <legend>Your account</legend>
+              <p class="step-copy">Use real details for the private beta. You can adjust your profile later.</p>
+              <label>
+                Email
+                <input id="email-input" type="email" autocomplete="email" required placeholder="you@example.com" />
+              </label>
+              <label>
+                Password
+                <input id="password-input" type="password" autocomplete="new-password" required minlength="8" placeholder="At least 8 characters" />
+              </label>
+              <label>
+                Name
+                <input id="name-input" autocomplete="name" required placeholder="Your first name" />
+              </label>
+              <div class="step-actions">
+                <button class="ghost-button previous-step" data-previous-step="0" type="button">Back</button>
+                <button class="primary-button next-step" data-next-step="2" type="button">Next</button>
+              </div>
+            </fieldset>
+
+            <fieldset class="onboarding-step hidden" data-step="2">
+              <legend>Your profile</legend>
+              <p class="step-copy">Add the basics people will see first.</p>
+              <label>
+                Age
+                <input id="age-input" type="number" min="18" max="99" required placeholder="28" />
+              </label>
+              <label>
+                City
+                <input id="city-input" autocomplete="address-level2" required placeholder="New York" />
+              </label>
+              <div class="step-actions">
+                <button class="ghost-button previous-step" data-previous-step="1" type="button">Back</button>
+                <button class="primary-button next-step" data-next-step="3" type="button">Next</button>
+              </div>
+            </fieldset>
+
+            <fieldset class="onboarding-step hidden" data-step="3">
+              <legend>Add a photo</legend>
+              <p class="step-copy">Optional for now. A real launch can make photos verified before messaging.</p>
+              <label>
+                Profile photo
+                <input id="photo-input" type="file" accept="image/*" />
+              </label>
+              <div id="photo-preview" class="upload-preview">
+                <div class="upload-image default-upload"></div>
+                <span>Default avatar will be used</span>
+              </div>
+              <div class="step-actions">
+                <button class="ghost-button previous-step" data-previous-step="2" type="button">Back</button>
+                <button class="primary-button next-step" data-next-step="4" type="button">Next</button>
+              </div>
+            </fieldset>
+
+            <fieldset class="onboarding-step hidden" data-step="4">
+              <legend>What are you looking for?</legend>
+              <p class="step-copy">Clear intent keeps the product safer and more direct.</p>
+              <label>
+                I want to meet
+                <select id="seeking-input" required>
+                  <option value="">Choose one</option>
+                  <option value="Women">Women</option>
+                  <option value="Men">Men</option>
+                  <option value="Other">Other</option>
+                  <option value="Everyone">Everyone</option>
+                </select>
+              </label>
+              <label>
+                Looking for
+                <select id="intent-input" required>
+                  <option value="">Choose one</option>
+                  <option value="Direct chemistry">Direct chemistry</option>
+                  <option value="Flirty chat first">Flirty chat first</option>
+                  <option value="Tonight only">Tonight only</option>
+                  <option value="Open to repeats">Open to repeats</option>
+                </select>
+              </label>
+              <label>
+                Bio
+                <textarea id="bio-input" rows="3" required placeholder="What are you looking for tonight?"></textarea>
+              </label>
+              <div class="step-actions">
+                <button class="ghost-button previous-step" data-previous-step="3" type="button">Back</button>
+                <button class="primary-button" type="submit">Start matching</button>
+              </div>
+            </fieldset>
+          </form>
+        </section>
+
+        <section id="app-view" class="dating-view hidden">
+          <div class="chat-app-heading">
+            <div>
+              <p class="eyebrow">HookAt live</p>
+              <h3>Browse and chat</h3>
+            </div>
+            <div class="chat-filter-title" id="chat-filter-title"></div>
+          </div>
+          <div class="tab-panel" id="chat-panel">
+            <div class="chat-layout">
+              <aside id="chat-people" class="chat-people" aria-label="People"></aside>
+              <section class="chat-room" aria-label="Conversation">
+                <div id="chat-title" class="chat-title">Choose a match</div>
+                <div id="messages" class="messages"></div>
+                <form id="message-form" class="message-form">
+                  <input id="message-input" placeholder="Write a message" />
+                  <button class="primary-button compact" type="submit">Send</button>
+                </form>
+              </section>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - HookAt</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="admin-page">
+    <main class="admin-shell">
+      <header class="admin-header">
+        <div>
+          <p class="eyebrow">HookAt admin</p>
+          <h1>Users</h1>
+        </div>
+        <a class="ghost-button" href="index.html">Back to app</a>
+      </header>
+
+      <section class="admin-note">
+        <strong>Local demo admin.</strong>
+        This page shows browser-stored demo users. Real production admin should use a secure database, admin login, audit logs, and never expose passwords.
+      </section>
+
+      <section id="admin-users" class="admin-users" aria-label="All users"></section>
+    </main>
+
+    <script src="admin.js"></script>
+  </body>
+</html>

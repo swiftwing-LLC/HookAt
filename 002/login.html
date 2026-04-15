@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Log in - HookAt</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="login-page">
+    <main class="login-shell">
+      <nav class="site-nav login-nav" aria-label="Site navigation">
+        <a class="brand-mark" href="index.html">HookAt</a>
+        <a class="login-create-link" href="index.html">Create account</a>
+      </nav>
+
+      <section class="login-panel" aria-labelledby="login-title">
+        <p class="eyebrow">Members only</p>
+        <h1 id="login-title">Log in</h1>
+        <p class="step-copy">Use the email and password from the account you created on this device.</p>
+
+        <form id="login-form" class="login-form">
+          <label>
+            Email
+            <input id="login-email" type="email" autocomplete="email" required placeholder="you@example.com" />
+          </label>
+          <label>
+            Password
+            <input id="login-password" type="password" autocomplete="current-password" required placeholder="Your password" />
+          </label>
+          <button class="primary-button" type="submit">Log in</button>
+        </form>
+      </section>
+    </main>
+
+    <script src="login.js"></script>
+  </body>
+</html>
