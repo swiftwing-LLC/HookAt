@@ -36,6 +36,9 @@
 
         <section id="auth-view" class="auth-view">
           <form id="auth-form" class="auth-form" novalidate>
+            <section id="storage-mode-note" class="storage-mode-note hidden" aria-live="polite">
+              数据只保存在本设备。Data is saved only on this device.
+            </section>
             <div class="step-track" aria-label="Account steps">
               <span class="step-dot active" data-step-dot="0"></span>
               <span class="step-dot" data-step-dot="1"></span>
@@ -141,6 +144,7 @@
                 <button class="primary-button" type="submit">Start matching</button>
               </div>
             </fieldset>
+            <p id="save-status" class="save-status" role="status" aria-live="polite"></p>
           </form>
         </section>
 

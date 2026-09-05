@@ -543,6 +543,35 @@ select:focus {
   padding: 28px 0;
 }
 
+.storage-mode-note,
+.save-status {
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.storage-mode-note {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  background: #fff7d6;
+  color: #5a4a13;
+  border: 1px solid #f0d87a;
+}
+
+.save-status {
+  min-height: 22px;
+  margin: 16px 0 0;
+  color: var(--muted);
+}
+
+.save-status.success {
+  color: #256f4a;
+}
+
+.save-status.error {
+  color: var(--danger);
+}
+
 .empty-state h3,
 .empty-state p,
 .list-head p {

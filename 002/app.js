@@ -1,4 +1,5 @@
 const STORAGE_KEY = "hookat-dating-state-v2";
+const ANONYMOUS_USER_KEY = "hookat-anonymous-user-id";
 const DEFAULT_PROFILE_IMAGE = "assets/default-avatar.png";
 
 const seedProfiles = [
@@ -70,6 +71,8 @@ const fallbackState = {
 };
 
 let state = loadState();
+let apiConfig = { storageMode: "database", apiAvailable: false };
+let isSubmitting = false;
 
 const authView = document.querySelector("#auth-view");
 const appView = document.querySelector("#app-view");
@@ -84,6 +87,8 @@ const messageForm = document.querySelector("#message-form");
 const messageInput = document.querySelector("#message-input");
 const photoInput = document.querySelector("#photo-input");
 const photoPreview = document.querySelector("#photo-preview");
+const storageModeNote = document.querySelector("#storage-mode-note");
+const saveStatus = document.querySelector("#save-status");
 let onboardingStep = 0;
 
 function loadState() {
@@ -99,6 +104,172 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function getAnonymousUserId() {
+  const existing = localStorage.getItem(ANONYMOUS_USER_KEY);
+  if (existing) return existing;
+  const generated = crypto.randomUUID
+    ? crypto.randomUUID()
+    : "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (char) =>
+      (Number(char) ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (Number(char) / 4)))).toString(16),
+    );
+  localStorage.setItem(ANONYMOUS_USER_KEY, generated);
+  return generated;
+}
+
+function setSaveStatus(message, type = "") {
+  if (!saveStatus) return;
+  saveStatus.textContent = message;
+  saveStatus.classList.toggle("success", type === "success");
+  saveStatus.classList.toggle("error", type === "error");
+}
+
+function setSubmitting(value) {
+  isSubmitting = value;
+  const submitButton = authForm.querySelector('button[type="submit"]');
+  if (submitButton) submitButton.disabled = value;
+}
+
+function syncStorageModeNote() {
+  const isLocalDemo = apiConfig.storageMode === "local" || !apiConfig.apiAvailable;
+  storageModeNote?.classList.toggle("hidden", !isLocalDemo);
+}
+
+async function loadApiConfig() {
+  try {
+    const response = await fetch("/api/config", { headers: { Accept: "application/json" } });
+    if (!response.ok) throw new Error("Config request failed.");
+    const payload = await response.json();
+    apiConfig = {
+      storageMode: payload.data?.storage_mode === "local" ? "local" : "database",
+      apiAvailable: true,
+    };
+  } catch {
+    apiConfig = { storageMode: "local", apiAvailable: false };
+  }
+  syncStorageModeNote();
+}
+
+async function apiFetch(path, options = {}) {
+  const response = await fetch(path, {
+    method: options.method || "GET",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "X-Anonymous-User-Id": getAnonymousUserId(),
+      ...(options.headers || {}),
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.success) {
+    const message = payload?.error?.message || "Request failed.";
+    throw new Error(message);
+  }
+  return payload.data;
+}
+
+function validateNameForSave(name) {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error("Name cannot be empty.");
+  if (trimmed.length > 100) throw new Error("Name must be 100 characters or fewer.");
+  if (/[<>\u0000-\u001f\u007f]/.test(trimmed)) throw new Error("Name contains unsupported characters.");
+  return trimmed;
+}
+
+async function hashPassword(password) {
+  if (!crypto.subtle) {
+    let hash = 2166136261;
+    for (const char of password) hash = (hash ^ char.charCodeAt(0)) * 16777619;
+    return `local-demo-${(hash >>> 0).toString(16)}`;
+  }
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function buildUserProfile(image, passwordHash) {
+  return {
+    email: document.querySelector("#email-input").value.trim(),
+    passwordHash,
+    name: validateNameForSave(document.querySelector("#name-input").value),
+    age: Number(document.querySelector("#age-input").value),
+    city: document.querySelector("#city-input").value.trim(),
+    seeking: document.querySelector("#seeking-input").value,
+    intent: document.querySelector("#intent-input").value,
+    bio: document.querySelector("#bio-input").value.trim(),
+    image: image || DEFAULT_PROFILE_IMAGE,
+    adultConfirmed: document.querySelector("#adult-input").checked,
+  };
+}
+
+function buildCriteriaPayload(user) {
+  return {
+    target_type: user.seeking || "Everyone",
+    location: null,
+    age_min: null,
+    age_max: null,
+    interests: [],
+    required_conditions: {},
+    preferred_conditions: user.intent ? { intent: user.intent } : {},
+    free_text_requirement: user.bio || null,
+  };
+}
+
+async function persistProfileAndCriteria(user) {
+  const profileData = await apiFetch("/api/profiles", {
+    method: "POST",
+    body: {
+      name: user.name,
+      age: user.age,
+      city: user.city,
+      seeking: user.seeking,
+      intent: user.intent,
+      bio: user.bio,
+      image_url: null,
+    },
+  });
+  const profile = profileData.profile;
+  const criteriaData = await apiFetch(`/api/profiles/${profile.id}/criteria`, {
+    method: "POST",
+    body: buildCriteriaPayload(user),
+  });
+  const criteria = criteriaData.criteria;
+  const matchData = await apiFetch("/api/matches/search", {
+    method: "POST",
+    body: {
+      profile_id: profile.id,
+      criteria_id: criteria.id,
+      limit: 20,
+    },
+  });
+
+  return {
+    profileId: profile.id,
+    criteriaId: criteria.id,
+    matches: (matchData.matches || []).map(mapApiMatchToProfile),
+  };
+}
+
+function mapApiMatchToProfile(match) {
+  const profile = match.profile || {};
+  return {
+    id: profile.id || match.profile_id,
+    name: profile.name || "Match",
+    gender: profile.gender || "Other",
+    age: profile.age || "",
+    city: profile.city || "",
+    bio: profile.bio || "",
+    interests: profile.interests || [],
+    image: profile.image_url || DEFAULT_PROFILE_IMAGE,
+    likesUser: true,
+    score: match.score,
+    structuredScore: match.structured_score,
+    semanticScore: match.semantic_score,
+    semanticSource: match.semantic_source,
+  };
 }
 
 function readImageFile(input) {
@@ -331,6 +502,7 @@ function activateTab(tabName) {
 
 authForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (isSubmitting) return;
   if (!validateOnboardingStep(0) || !validateOnboardingStep(1) || !validateOnboardingStep(2) || !validateOnboardingStep(4)) return;
   const age = Number(document.querySelector("#age-input").value);
   const password = document.querySelector("#password-input").value;
@@ -347,27 +519,34 @@ authForm.addEventListener("submit", async (event) => {
 
   let image = "";
   try {
+    setSubmitting(true);
+    setSaveStatus("Saving...");
     image = await readImageFile(photoInput);
   } catch (error) {
-    alert(error.message);
+    setSaveStatus(error.message, "error");
+    setSubmitting(false);
     return;
   }
 
-  state.currentUser = {
-    email: document.querySelector("#email-input").value.trim(),
-    password,
-    name: document.querySelector("#name-input").value.trim(),
-    age,
-    city: document.querySelector("#city-input").value.trim(),
-    seeking: document.querySelector("#seeking-input").value,
-    intent: document.querySelector("#intent-input").value,
-    bio: document.querySelector("#bio-input").value.trim(),
-    image: image || DEFAULT_PROFILE_IMAGE,
-    adultConfirmed: document.querySelector("#adult-input").checked,
-  };
-  state.savedUser = { ...state.currentUser };
-  saveState();
-  render();
+  try {
+    const user = buildUserProfile(image, await hashPassword(password));
+    const isLocalDemo = apiConfig.storageMode === "local" || !apiConfig.apiAvailable;
+    if (!isLocalDemo) {
+      const saved = await persistProfileAndCriteria(user);
+      user.profileId = saved.profileId;
+      user.criteriaId = saved.criteriaId;
+      state.profiles = saved.matches;
+    }
+    state.currentUser = user;
+    state.savedUser = { ...state.currentUser };
+    saveState();
+    setSaveStatus(isLocalDemo ? "Saved on this device only." : "Saved successfully.", "success");
+    render();
+  } catch (error) {
+    setSaveStatus(`Save failed. ${error.message}`, "error");
+  } finally {
+    setSubmitting(false);
+  }
 });
 
 photoInput.addEventListener("change", async () => {
@@ -424,4 +603,9 @@ messageForm.addEventListener("submit", (event) => {
   renderChat();
 });
 
-render();
+async function initializeApp() {
+  await loadApiConfig();
+  render();
+}
+
+initializeApp();

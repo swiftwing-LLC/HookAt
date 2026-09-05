@@ -15,7 +15,19 @@ function loadState() {
   }
 }
 
-loginForm.addEventListener("submit", (event) => {
+async function hashPassword(password) {
+  if (!crypto.subtle) {
+    let hash = 2166136261;
+    for (const char of password) hash = (hash ^ char.charCodeAt(0)) * 16777619;
+    return `local-demo-${(hash >>> 0).toString(16)}`;
+  }
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const state = loadState();
   const savedUser = state?.savedUser;
@@ -32,13 +44,16 @@ loginForm.addEventListener("submit", (event) => {
   }
 
   const emailMatches = savedUser.email === emailInput.value.trim();
-  const passwordMatches = savedUser.password === passwordInput.value;
+  const passwordMatches = savedUser.passwordHash
+    ? savedUser.passwordHash === await hashPassword(passwordInput.value)
+    : savedUser.password === passwordInput.value;
 
   if (!emailMatches || !passwordMatches) {
     alert("Email or password is incorrect.");
     return;
   }
 
+  delete savedUser.password;
   state.currentUser = { ...savedUser };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   window.location.href = "index.html";
